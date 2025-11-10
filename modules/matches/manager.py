@@ -5,13 +5,30 @@ import json
 async def get_matches():
     conn = await get_db_connection()
     try:
-        matches = await conn.fetch("SELECT * FROM matches")
+        matches = await conn.fetch("""
+            SELECT 
+                m.match_id,
+                m.season_id,
+                m.team1_id,
+                t1.team_name as team1_name,
+                m.team2_id,
+                t2.team_name as team2_name,
+                m.venue_id,
+                m.date,
+                m.time,
+                m.results
+            FROM matches m
+            LEFT JOIN teams t1 ON m.team1_id = t1.team_id
+            LEFT JOIN teams t2 ON m.team2_id = t2.team_id
+        """)
         return [
             {
                 "match_id": match["match_id"],
                 "season_id": match["season_id"],
                 "team1_id": match["team1_id"],
+                "team1_name": match["team1_name"],
                 "team2_id": match["team2_id"],
+                "team2_name": match["team2_name"],
                 "venue_id": match["venue_id"],
                 "date": match["date"].isoformat() if match["date"] else None,
                 "time": match["time"].isoformat() if match["time"] else None,
@@ -25,23 +42,39 @@ async def get_matches():
 async def get_match_by_id(match_id: int):
     conn = await get_db_connection()
     try:
-        match = await conn.fetchrow("SELECT * FROM matches WHERE match_id = $1", match_id)
+        match = await conn.fetchrow("""
+            SELECT 
+                m.match_id,
+                m.season_id,
+                m.team1_id,
+                t1.team_name as team1_name,
+                m.team2_id,
+                t2.team_name as team2_name,
+                m.venue_id,
+                m.date,
+                m.time,
+                m.results
+            FROM matches m
+            LEFT JOIN teams t1 ON m.team1_id = t1.team_id
+            LEFT JOIN teams t2 ON m.team2_id = t2.team_id
+            WHERE m.match_id = $1
+        """, match_id)
 
         if match:
-            return [
-                {
-                    "match_id": match["match_id"],
-                    "season_id": match["season_id"],
-                    "team1_id": match["team1_id"],
-                    "team2_id": match["team2_id"],
-                    "venue_id": match["venue_id"],
-                    "date": match["date"].isoformat() if match["date"] else None,
-                    "time": match["time"].isoformat() if match["time"] else None,
-                    "results": json.loads(match["results"]) if match["results"] else None
-                }
-            ]
+            return {
+                "match_id": match["match_id"],
+                "season_id": match["season_id"],
+                "team1_id": match["team1_id"],
+                "team1_name": match["team1_name"],
+                "team2_id": match["team2_id"],
+                "team2_name": match["team2_name"],
+                "venue_id": match["venue_id"],
+                "date": match["date"].isoformat() if match["date"] else None,
+                "time": match["time"].isoformat() if match["time"] else None,
+                "results": json.loads(match["results"]) if match["results"] else None
+            }
         else:
-            return match
+            return None
     finally:
         await conn.close()
 

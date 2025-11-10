@@ -1,8 +1,14 @@
 from pydantic import BaseModel
-from typing import Any
+from typing import Any, Optional
 
 class LeagueCreate(BaseModel):
     league_name: str
-    description: str | None = None
-    rules: str | None = None
-    settings: Any | None = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
+    settings: Optional[Any] = None
+
+class LeagueUpdate(BaseModel):
+    league_name: Optional[str] = None
+    description: Optional[str] = None
+    rules: Optional[str] = None
+    settings: Optional[Any] = None

@@ -6,7 +6,17 @@ async def get_teams():
     conn = await get_db_connection()
     try:
         teams = await conn.fetch("SELECT * FROM teams")
-        return [dict(team) for team in teams]
+        result = []
+        for team in teams:
+            team_dict = dict(team)
+            # Parse contact_info JSON string to dict
+            if team_dict.get('contact_info'):
+                try:
+                    team_dict['contact_info'] = json.loads(team_dict['contact_info'])
+                except (json.JSONDecodeError, TypeError):
+                    team_dict['contact_info'] = {}
+            result.append(team_dict)
+        return result
     finally:
         await conn.close()
 
@@ -14,7 +24,16 @@ async def get_team_by_id(team_id: int):
     conn = await get_db_connection()
     try:
         team = await conn.fetchrow("SELECT * FROM teams WHERE team_id = $1", team_id)
-        return dict(team) if team else None
+        if team:
+            team_dict = dict(team)
+            # Parse contact_info JSON string to dict
+            if team_dict.get('contact_info'):
+                try:
+                    team_dict['contact_info'] = json.loads(team_dict['contact_info'])
+                except (json.JSONDecodeError, TypeError):
+                    team_dict['contact_info'] = {}
+            return team_dict
+        return None
     finally:
         await conn.close()
 
@@ -32,7 +51,7 @@ async def create_team(team: TeamCreate):
 
 async def update_team(team_id: int, team: TeamUpdate):
     conn = await get_db_connection()
-    contact_info = json.dumps(team.contact_info)
+    contact_info = json.dumps(team.contact_info) if team.contact_info else None
     try:
         result = await conn.execute("""
             UPDATE teams 
