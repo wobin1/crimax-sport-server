@@ -86,4 +86,42 @@ CREATE TABLE IF NOT EXISTS messages (
     content TEXT,
     timestamp TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS sections (
+    section_id SERIAL PRIMARY KEY,
+    section_name VARCHAR(100) UNIQUE NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS news (
+    news_id SERIAL PRIMARY KEY,
+    section_id INT REFERENCES sections(section_id) ON DELETE SET NULL,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    image VARCHAR(500),
+    author_id INT REFERENCES users(user_id),
+    author_name VARCHAR(100),
+    author_avatar VARCHAR(500),
+    read_time INT DEFAULT 5,
+    tags TEXT[],
+    featured BOOLEAN DEFAULT FALSE,
+    is_published BOOLEAN DEFAULT FALSE,
+    published_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    views INT DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_news_section ON news(section_id);
+CREATE INDEX IF NOT EXISTS idx_news_slug ON news(slug);
+CREATE INDEX IF NOT EXISTS idx_news_published ON news(is_published, published_at);
+CREATE INDEX IF NOT EXISTS idx_news_featured ON news(featured);
+CREATE INDEX IF NOT EXISTS idx_sections_slug ON sections(slug);
 """
