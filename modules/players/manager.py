@@ -1,12 +1,46 @@
 from modules.shared.db import get_db_connection
 from .models import PlayerCreate, PlayerUpdate
 import json
+from typing import Optional
 
-async def get_players():
+async def get_players(team_id: Optional[int] = None):
     conn = await get_db_connection()
     try:
-        players = await conn.fetch("SELECT * FROM players")
-        return [dict(player) for player in players]
+        if team_id is not None:
+            query = """
+                SELECT 
+                    p.player_id,
+                    CONCAT(p.first_name, ' ', p.last_name) as player_name,
+                    p.team_id,
+                    t.team_name
+                FROM players p
+                LEFT JOIN teams t ON p.team_id = t.team_id
+                WHERE p.team_id = $1
+                ORDER BY CONCAT(p.first_name, ' ', p.last_name)
+            """
+            players = await conn.fetch(query, team_id)
+        else:
+            query = """
+                SELECT 
+                    p.player_id,
+                    CONCAT(p.first_name, ' ', p.last_name) as player_name,
+                    p.team_id,
+                    t.team_name
+                FROM players p
+                LEFT JOIN teams t ON p.team_id = t.team_id
+                ORDER BY CONCAT(p.first_name, ' ', p.last_name)
+            """
+            players = await conn.fetch(query)
+        
+        return [
+            {
+                "player_id": player["player_id"],
+                "player_name": player["player_name"],
+                "team_id": player["team_id"],
+                "team_name": player["team_name"]
+            }
+            for player in players
+        ]
     finally:
         await conn.close()
 

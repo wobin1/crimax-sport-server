@@ -3,12 +3,14 @@ from .manager import get_players, get_player_by_id, create_player, update_player
 from .models import PlayerCreate, PlayerUpdate
 from modules.shared.response import success_response, error_response
 from modules.auth.router import get_current_user
+from typing import Optional
 
 router = APIRouter()
 
 @router.get("/", dependencies=[Depends(get_current_user)])
-async def list_players():
-    players = await get_players()
+async def list_players(team_id: Optional[int] = None):
+    """Get all players, optionally filtered by team_id"""
+    players = await get_players(team_id=team_id)
     return success_response(players)
 
 @router.get("/{player_id}", dependencies=[Depends(get_current_user)])

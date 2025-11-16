@@ -10,6 +10,7 @@ from modules.matches.router import router as matches_router
 from modules.standings.router import router as standings_router
 from modules.venues.router import router as venues_router
 from modules.news.router import router as news_router
+from modules.seasons import router as seasons_router
 
 app = FastAPI()
 
@@ -31,6 +32,7 @@ app.include_router(matches_router, prefix="/matches", tags=["matches"])
 app.include_router(standings_router, prefix="/standings", tags=["standings"])
 app.include_router(venues_router, prefix="/venues", tags=["venues"])
 app.include_router(news_router, prefix="/news", tags=["news"])
+app.include_router(seasons_router.router, prefix="/seasons")
 
 @app.on_event("startup")
 async def startup_event():
