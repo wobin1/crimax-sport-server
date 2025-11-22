@@ -6,8 +6,8 @@ ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'scheduled';
 
 -- Create match_statistics table
 CREATE TABLE IF NOT EXISTS match_statistics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    match_id INTEGER NOT NULL REFERENCES matches(match_id) ON DELETE CASCADE,
     home_team_stats JSONB NOT NULL DEFAULT '{}',
     away_team_stats JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMP DEFAULT NOW(),

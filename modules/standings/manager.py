@@ -4,32 +4,45 @@ async def get_league_standings(league_id: int):
     conn = await get_db_connection()
     try:
         standings_query = """
-            WITH match_results AS (
+            WITH match_scores AS (
+                -- Calculate scores from match_goals table
                 SELECT 
-                    m.team1_id AS team_id,
-                    m.results->>'team1_score' AS score_for,
-                    m.results->>'team2_score' AS score_against,
-                    CASE 
-                        WHEN (m.results->>'team1_score')::int > (m.results->>'team2_score')::int THEN 3
-                        WHEN (m.results->>'team1_score')::int = (m.results->>'team2_score')::int THEN 1
-                        ELSE 0
-                    END AS points
+                    m.match_id,
+                    m.team1_id,
+                    m.team2_id,
+                    COALESCE((SELECT COUNT(*) FROM match_goals WHERE match_id = m.match_id AND team_id = m.team1_id), 0) as team1_score,
+                    COALESCE((SELECT COUNT(*) FROM match_goals WHERE match_id = m.match_id AND team_id = m.team2_id), 0) as team2_score
                 FROM matches m
                 JOIN seasons s ON m.season_id = s.season_id
-                WHERE s.league_id = $1 AND m.results IS NOT NULL
+                WHERE s.league_id = $1
+                    AND m.date <= CURRENT_DATE  -- Only include matches that have occurred
+            ),
+            match_results AS (
+                -- Home team results
+                SELECT 
+                    team1_id AS team_id,
+                    team1_score AS score_for,
+                    team2_score AS score_against,
+                    CASE 
+                        WHEN team1_score > team2_score THEN 3
+                        WHEN team1_score = team2_score THEN 1
+                        ELSE 0
+                    END AS points
+                FROM match_scores
+                WHERE team1_score > 0 OR team2_score > 0  -- Only include matches with goals
                 UNION ALL
+                -- Away team results
                 SELECT 
-                    m.team2_id AS team_id,
-                    m.results->>'team2_score' AS score_for,
-                    m.results->>'team1_score' AS score_against,
+                    team2_id AS team_id,
+                    team2_score AS score_for,
+                    team1_score AS score_against,
                     CASE 
-                        WHEN (m.results->>'team2_score')::int > (m.results->>'team1_score')::int THEN 3
-                        WHEN (m.results->>'team2_score')::int = (m.results->>'team1_score')::int THEN 1
+                        WHEN team2_score > team1_score THEN 3
+                        WHEN team2_score = team1_score THEN 1
                         ELSE 0
                     END AS points
-                FROM matches m
-                JOIN seasons s ON m.season_id = s.season_id
-                WHERE s.league_id = $1 AND m.results IS NOT NULL
+                FROM match_scores
+                WHERE team1_score > 0 OR team2_score > 0  -- Only include matches with goals
             )
             SELECT 
                 t.team_id,

@@ -60,38 +60,8 @@ CREATE TABLE IF NOT EXISTS matches (
     venue_id INT,
     date DATE,
     time TIME,
-    results JSONB,
-    home_score INTEGER DEFAULT 0,
-    away_score INTEGER DEFAULT 0,
-    status VARCHAR(50) DEFAULT 'scheduled'
+    results JSONB
 );
-
-CREATE TABLE IF NOT EXISTS match_statistics (
-    id SERIAL PRIMARY KEY,
-    match_id INT NOT NULL REFERENCES matches(match_id) ON DELETE CASCADE,
-    home_team_stats JSONB NOT NULL DEFAULT '{}',
-    away_team_stats JSONB NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(match_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_match_statistics_match_id ON match_statistics(match_id);
-CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
-
-CREATE TABLE IF NOT EXISTS match_goals (
-    id SERIAL PRIMARY KEY,
-    match_id INT NOT NULL REFERENCES matches(match_id) ON DELETE CASCADE,
-    player_id INT NOT NULL REFERENCES players(player_id) ON DELETE CASCADE,
-    team_id INT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
-    minute INT NOT NULL,
-    goal_type VARCHAR(50) DEFAULT 'regular',
-    created_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT check_minute CHECK (minute >= 0 AND minute <= 120)
-);
-
-CREATE INDEX IF NOT EXISTS idx_match_goals_match_id ON match_goals(match_id);
-CREATE INDEX IF NOT EXISTS idx_match_goals_player_id ON match_goals(player_id);
 
 CREATE TABLE IF NOT EXISTS venues (
     venue_id SERIAL PRIMARY KEY,

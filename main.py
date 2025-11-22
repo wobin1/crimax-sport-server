@@ -11,6 +11,14 @@ from modules.standings.router import router as standings_router
 from modules.venues.router import router as venues_router
 from modules.news.router import router as news_router
 from modules.seasons import router as seasons_router
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -36,8 +44,25 @@ app.include_router(seasons_router.router, prefix="/seasons")
 
 @app.on_event("startup")
 async def startup_event():
-    await init_db()  # Create tables
-    await seed_data()  # Seed initial data
+    """Initialize database on application startup"""
+    logger.info("🚀 Starting Crimax Sport application...")
+    
+    try:
+        # Step 1: Initialize database (create tables + run migrations)
+        logger.info("📊 Initializing database...")
+        await init_db()
+        logger.info("✅ Database initialized successfully")
+        
+        # Step 2: Seed initial data
+        logger.info("🌱 Seeding initial data...")
+        await seed_data()
+        logger.info("✅ Data seeded successfully")
+        
+        logger.info("🎉 Application startup complete!")
+        
+    except Exception as e:
+        logger.error(f"❌ Startup failed: {e}")
+        raise
 
 @app.get("/")
 async def root():
